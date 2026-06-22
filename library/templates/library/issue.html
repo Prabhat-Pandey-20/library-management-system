@@ -1,0 +1,91 @@
+{% extends 'library/base.html' %}
+{% block title %}Issue / Return - Library System{% endblock %}
+
+{% block content %}
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="number">{{ total_issued }}</div>
+    <div class="label">Currently Issued</div>
+    <div class="stat-bar"><div class="stat-bar-fill" style="width: 100%; background: var(--warning);"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ total_returned }}</div>
+    <div class="label">Returned</div>
+    <div class="stat-bar"><div class="stat-bar-fill" style="width: 100%; background: var(--success);"></div></div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ issues|length }}</div>
+    <div class="label">Total Transactions</div>
+    <div class="stat-bar"><div class="stat-bar-fill" style="width: 100%; background: var(--primary);"></div></div>
+  </div>
+</div>
+
+<div class="card p-4">
+  <h2><i class="fas fa-hand-holding me-2 text-warning"></i>Issue / Return Books</h2>
+  
+  <form method="POST" class="row g-3 mb-4">
+    {% csrf_token %}
+    <div class="col-md-4">{{ form.student }}</div>
+    <div class="col-md-4">{{ form.book }}</div>
+    <div class="col-md-2">{{ form.due_date }}</div>
+    <div class="col-md-2">
+      <button class="btn btn-warning w-100" title="Issue Book"><i class="fas fa-paper-plane"></i> Issue</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th><i class="fas fa-user me-1"></i>Student</th>
+          <th><i class="fas fa-book me-1"></i>Book</th>
+          <th><i class="fas fa-calendar-day me-1"></i>Issue Date</th>
+          <th><i class="fas fa-calendar-check me-1"></i>Due Date</th>
+          <th><i class="fas fa-info-circle me-1"></i>Status</th>
+          <th><i class="fas fa-cog me-1"></i>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in issues %}
+        <tr class="slide-in {% if i.status == 'issued' and i.due_date < today %}table-warning{% endif %}">
+          <td><strong>{{ i.student.name }}</strong><br><small class="text-muted">{{ i.student.student_id }}</small></td>
+          <td>{{ i.book.title }}<br><small class="text-muted">{{ i.book.author }}</small></td>
+          <td>{{ i.issue_date }}</td>
+          <td>
+            {% if i.due_date < today and i.status == 'issued' %}
+              <span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>{{ i.due_date }}</span>
+            {% else %}
+              {{ i.due_date }}
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if i.status == 'issued' %}badge-issued{% else %}badge-returned{% endif %}">
+              <i class="fas {% if i.status == 'issued' %}fa-clock{% else %}fa-check{% endif %} me-1"></i>{{ i.status|title }}
+            </span>
+          </td>
+          <td>
+            {% if i.status == 'issued' %}
+              <a href="{% url 'return_book' i.pk %}" class="return-btn" 
+                 onclick="return confirm('Mark &quot;{{ i.book.title }}&quot; as returned by {{ i.student.name }}?')">
+                <i class="fas fa-undo me-1"></i>Return
+              </a>
+            {% else %}
+              <span class="text-muted"><i class="fas fa-check-double me-1"></i>Returned on {{ i.return_date }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="fas fa-clipboard-list"></i>
+              <p>No transactions yet. Issue a book above!</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
